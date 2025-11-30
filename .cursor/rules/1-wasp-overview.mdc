@@ -1,0 +1,56 @@
+---
+description: Laravel 12 framework overview and core concepts for LoanEase
+globs: 
+alwaysApply: true
+---
+# 1. Laravel Overview and Core Concepts
+
+This document covers the fundamental concepts of the Laravel 12 framework, the basic project structure, and deployment information for the **LoanEase** loan management system.
+
+## Background Information
+
+### What is Laravel
+
+- Laravel is a PHP web application framework with elegant syntax and powerful features for building modern web applications.
+- It uses the MVC (Model-View-Controller) pattern to organize code logically and maintain separation of concerns.
+- Laravel 12 integrates with Blade (templating), Eloquent (ORM), MySQL (database), and Vite (asset bundling) to create full-stack web applications.
+- Laravel's command-line interface (Artisan) provides tools for scaffolding, migrations, and development tasks.
+- Vite provides fast asset bundling and Hot Module Replacement (HMR) during development.
+- For the most up-to-date and comprehensive information, always refer to the [Laravel Docs](https://laravel.com/docs) -- https://laravel.com/docs
+
+### Supported User Roles (THREE ROLES ONLY)
+
+- **Admin**: Full system access - manage users, view all data, generate reports, system configuration
+- **Officer**: Process loan applications, verify documents, approve/reject loans, process requests
+- **Member**: Submit loan applications, upload documents, view own application status
+- ❌ **NO OTHER ROLES ALLOWED** - Never add LGU Verifier, Employer, Manager, or any other custom role
+
+### Laravel Project Structure
+
+- A Laravel project consists of organized directories: `app/`, `routes/`, `resources/`, `database/`, `config/`, etc.
+- The `app/Models/` directory contains Eloquent models that represent database tables.
+- The `app/Http/Controllers/` directory contains controllers that handle request logic.
+- The `resources/views/` directory contains Blade templates for rendering HTML.
+- The `database/migrations/` directory contains migration files for schema management.
+- The `routes/web.php` file defines all web routes for the application.
+- The `vite.config.js` configures Vite for frontend asset bundling and HMR (Hot Module Replacement).
+
+### The MVC Pattern
+
+- **Model** (`app/Models/`): Represents data and business logic, interacts with the database via Eloquent ORM.
+- **View** (`resources/views/`): Blade templates that render HTML, receive data from controllers.
+- **Controller** (`app/Http/Controllers/`): Handles HTTP requests, processes data, and returns responses.
+- Example flow:
+  ```
+  Route (routes/web.php) 
+    → Controller (app/Http/Controllers/LoanController.php)
+    → Model (app/Models/Loan.php)
+    → View (resources/views/loans/index.blade.php)
+  ```
+
+### Deployment
+
+- Laravel applications can be deployed to various hosting providers (shared hosting, VPS, cloud platforms).
+- Common deployment platforms: Laravel Forge, Heroku, AWS, DigitalOcean, Linode.
+- Deployment typically involves uploading code, running migrations, and configuring environment variables.
+- Use `php artisan migrate` to apply database schema changes in production. 

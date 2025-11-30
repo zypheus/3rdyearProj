@@ -1,0 +1,219 @@
+# LoanEase - Development Guidelines
+
+This is a **Laravel 12 web application** for managing loan applications, approvals, payments, and reporting. Always consider the following background information and rules when planning and implementing features.
+
+## Quick Reference
+
+### Project Overview
+- **Framework**: Laravel 12 (PHP 8.2+)
+- **Frontend**: Blade Templates, Tailwind CSS, Livewire
+- **Database**: MySQL (via XAMPP / phpMyAdmin)
+- **Authentication**: Laravel Breeze with Role-Based Access Control (RBAC)
+- **Hosting**: HTTPS-enabled server (InfinityFree / 000WebHost)
+- **Key Features**: Loan applications, verification, approval, payment tracking, document uploads, reporting
+
+### Core Concepts
+- **Three-tier Architecture**: Presentation (Blade/Tailwind), Application (Laravel), Database (MySQL)
+- **Role-Based Access Control (RBAC)**: Member, Loan Officer, Admin, LGU Verifier, Employer
+- **Loan Types**: Multi-Purpose Loan (MPL), Calamity Loan
+- **Key Entities**: Users, Members, Loans, Payments, Documents, Audit Logs
+
+### Directory Structure
+```
+app/
+  Models/          # Eloquent models (User, Member, Loan, Payment, Document, etc.)
+  Http/
+    Controllers/   # Feature-based controllers (LoanController, PaymentController, etc.)
+    Middleware/    # RBAC middleware, custom middleware
+    Requests/      # Form validation requests
+  Services/        # Business logic services (LoanService, PaymentService, etc.)
+  Policies/        # Authorization policies for RBAC
+resources/
+  views/
+    layouts/       # Main layout templates
+    auth/          # Authentication views
+    loans/         # Loan-related views
+    payments/      # Payment-related views
+    admin/         # Admin dashboard views
+    reports/       # Report views
+  css/             # Tailwind CSS
+database/
+  migrations/      # Database schema migrations
+  seeders/         # Database seeders for initial data
+routes/
+  web.php          # Web routes with middleware groups
+  api.php          # API routes (if needed)
+```
+
+### Common Patterns
+- Define models in `app/Models/` with relationships
+- Create controllers in `app/Http/Controllers/` organized by feature
+- Use Eloquent ORM for database queries
+- Implement business logic in `app/Services/` for reusability
+- Use middleware for authentication and role-based access control
+- Document features in `./ai/docs` with:
+  - One markdown file per feature (e.g. `./ai/docs/loan-application.md`)
+  - Database schema and model relationships
+  - User workflows and business logic
+  - API endpoints or controller methods
+  - Validation rules and error handling
+
+## Background Information
+
+### Laravel Framework
+
+- Laravel is a PHP web application framework with elegant syntax and powerful features.
+- It uses the MVC (Model-View-Controller) pattern for organizing code.
+- Eloquent ORM provides an expressive way to interact with databases.
+- Middleware allows filtering HTTP requests before they reach controllers.
+- Blade is a lightweight templating engine for rendering views.
+
+### Database Design (MySQL)
+
+Key entities for the LoanEase System:
+
+- **Role**: User roles (Member, Officer, Admin, LGU Verifier, Employer)
+- **User**: Authentication and user accounts
+- **Member**: Member profiles with contribution and TAV data
+- **LoanType**: Loan types (MPL, Calamity) with interest rates
+- **Loan**: Loan applications with status tracking
+- **Payment**: Loan payment records
+- **Document**: Member-uploaded documents for verification
+- **AuditLog**: System activity logging for compliance
+
+### Authentication & Authorization
+
+- Laravel Breeze provides simple authentication scaffolding
+- Spatie Permission package enables role-based access control
+- Middleware protects routes based on user roles
+- Policies authorize specific actions on resources
+
+### Validation & Error Handling
+
+- Use Form Request classes for validation
+- Implement try-catch blocks in controllers
+- Return appropriate HTTP status codes
+- Log errors for debugging and compliance
+
+## Rules
+
+### General Rules
+
+- Always reference the database schema (migrations) as your source of truth for data structure
+- Always reference `./ai/docs` for feature specifications and workflows
+- Organize code by feature: controllers, models, services, views in feature-specific directories
+- Use Eloquent relationships to define model associations
+- Implement RBAC middleware on all protected routes
+- Write migrations for all database schema changes
+- Use environment variables (.env) for sensitive configuration
+
+### Laravel Code Organization
+
+- **Models**: Define in `app/Models/`, use relationships for associations
+- **Controllers**: Feature-based in `app/Http/Controllers/`, keep logic minimal
+- **Services**: Business logic in `app/Services/`, reusable across controllers
+- **Middleware**: Authentication and RBAC in `app/Http/Middleware/`
+- **Requests**: Validation in `app/Http/Requests/`
+- **Views**: Blade templates in `resources/views/`, organized by feature
+
+### Database Rules
+
+- Define all tables in migrations within `database/migrations/`
+- Use Eloquent relationships (hasMany, belongsTo, etc.) in models
+- Always include timestamps (created_at, updated_at) on tables
+- Use foreign keys for referential integrity
+- Run migrations with `php artisan migrate`
+- Create seeders for initial data in `database/seeders/`
+
+### Authentication & RBAC
+
+- Protect routes with `auth` middleware
+- Use role-based middleware for specific roles: `role:member`, `role:officer`, etc.
+- Define permissions in policies (`app/Policies/`)
+- Check authorization in controllers: `$this->authorize('action', $resource)`
+- Log all sensitive actions in AuditLog for compliance
+
+### Blade Templates & Views
+
+- Use Blade syntax for templating: `{{ $variable }}`, `@if`, `@foreach`, etc.
+- Organize views by feature in `resources/views/{feature}/`
+- Use Tailwind CSS for styling (blue and yellow for LoanEase branding)
+- Create reusable components in `resources/views/components/`
+- Use form helpers: `@csrf`, `@method('PUT')` for security
+
+### Validation
+
+- Use Form Request classes for complex validation
+- Define validation rules in `app/Http/Requests/{Feature}Request.php`
+- Use Laravel's built-in validators and custom rules
+- Return validation errors with appropriate messages
+- Example:
+  ```php
+  public function rules()
+  {
+    return [
+      'email' => 'required|email|unique:users',
+      'amount' => 'required|numeric|min:1000|max:500000',
+    ];
+  }
+  ```
+
+### Error Handling
+
+- Use try-catch blocks in controllers and services
+- Log errors using Laravel's logging: `Log::error('message', $context)`
+- Return appropriate HTTP status codes (200, 400, 401, 403, 404, 500)
+- Display user-friendly error messages in views
+- Example:
+  ```php
+  try {
+    $loan = Loan::findOrFail($id);
+    // Process loan
+  } catch (ModelNotFoundException $e) {
+    Log::error('Loan not found', ['id' => $id]);
+    return redirect()->back()->with('error', 'Loan not found');
+  }
+  ```
+
+### Tailwind CSS
+
+- Use Tailwind for all styling
+- Follow LoanEase color scheme: blue and yellow
+- Use responsive classes: `sm:`, `md:`, `lg:`, `xl:`
+- Create reusable component classes with `@apply`
+- Avoid inline styles
+
+### Performance Optimization
+
+- Use eager loading to prevent N+1 queries: `Loan::with('member', 'payments')->get()`
+- Implement pagination for large datasets: `Loan::paginate(15)`
+- Cache frequently accessed data
+- Use database indexes on foreign keys and frequently queried columns
+- Optimize queries with select specific columns: `Loan::select('id', 'amount', 'status')->get()`
+
+### Security Best Practices
+
+- Always use CSRF protection: `@csrf` in forms
+- Hash passwords: `Hash::make($password)`
+- Validate and sanitize all user inputs
+- Use prepared statements with Eloquent to prevent SQL injection
+- Implement rate limiting on sensitive endpoints
+- Use HTTPS for all communication
+- Store sensitive data in .env, never in code
+
+### Testing & Debugging
+
+- Write tests for critical features
+- Use `dd()` for debugging during development
+- Use Laravel Tinker for interactive testing: `php artisan tinker`
+- Check logs in `storage/logs/laravel.log`
+- Use browser developer tools for frontend debugging
+
+### Troubleshooting
+
+- If routes aren't working, check `routes/web.php` and middleware
+- If database queries fail, check model relationships and migrations
+- If authentication fails, verify `.env` configuration and user roles
+- If views don't render, check Blade syntax and variable availability
+- For permission issues, verify RBAC middleware and policies
+- Run `php artisan cache:clear` and `php artisan config:clear` if changes don't appear

@@ -1,0 +1,157 @@
+---
+description: Laravel database, models, and operations
+globs: 
+alwaysApply: true
+---
+# 3. Database, Models, and Operations
+
+This document covers how Laravel interacts with the database using Eloquent ORM, defines models, and explains the rules for creating and using database operations.
+
+## Laravel Database and Models
+
+- Laravel uses Eloquent ORM for database access, with models defined in `app/Models/`.
+- Eloquent models represent database tables and provide an intuitive interface for querying and manipulating data.
+- Migrations in `database/migrations/` define the database schema.
+- Example Eloquent model in `app/Models/Task.php`:
+  ```php
+  namespace App\Models;
+  
+  use Illuminate\Database\Eloquent\Model;
+  use Illuminate\Database\Eloquent\Relations\BelongsTo;
+  
+  class Task extends Model
+  {
+    protected $fillable = ['description', 'is_done', 'user_id'];
+    
+    public function user(): BelongsTo
+    {
+      return $this->belongsTo(User::class);
+    }
+  }
+  ```
+
+## Database Schema Rules (Migrations)
+
+- Add database tables via migrations in `database/migrations/`.
+- Create migrations using `php artisan make:migration create_tasks_table`.
+- Define all table structures, columns, and relationships in migrations.
+- Example migration:
+  ```php
+  Schema::create('tasks', function (Blueprint $table) {
+    $table->id();
+    $table->string('description');
+    $table->boolean('is_done')->default(false);
+    $table->foreignId('user_id')->constrained();
+    $table->timestamps();
+  });
+  ```
+- **Applying Changes:** After creating or updating migrations, run `php artisan migrate` to apply changes.
+- **Database Choice:** Use MySQL for production. SQLite is acceptable for development/testing.
+- Define all model relationships using Eloquent relationship methods in model classes.
+
+## Eloquent Models & Relationships
+
+- **Models:** Represent database tables, located in `app/Models/`.
+- **Relationships:** Define relationships between models using Eloquent methods.
+  - `hasMany()`: One-to-many relationship
+  - `belongsTo()`: Inverse of hasMany
+  - `belongsToMany()`: Many-to-many relationship
+  - `hasOne()`: One-to-one relationship
+- Example model with relationships:
+  ```php
+  class User extends Model
+  {
+    public function tasks(): HasMany
+    {
+      return $this->hasMany(Task::class);
+    }
+  }
+  ```
+
+## Controller Operations (Queries & Actions)
+
+- Controllers handle HTTP requests and return responses.
+- **Queries:** Read operations (fetch data from database).
+- **Actions:** Write operations (create, update, delete data).
+- Controllers use Eloquent models to interact with the database.
+- Example controller in `app/Http/Controllers/TaskController.php`:
+  ```php
+  namespace App\Http\Controllers;
+  
+  use App\Models\Task;
+  use Illuminate\Http\Request;
+  
+  class TaskController extends Controller
+  {
+    // Query: Get all tasks for authenticated user
+    public function index()
+    {
+      $tasks = Task::where('user_id', auth()->id())->get();
+      return view('tasks.index', ['tasks' => $tasks]);
+    }
+    
+    // Action: Create a new task
+    public function store(Request $request)
+    {
+      $validated = $request->validate([
+        'description' => 'required|string|max:255',
+      ]);
+      
+      $task = Task::create([
+        'description' => $validated['description'],
+        'user_id' => auth()->id(),
+      ]);
+      
+      return redirect()->route('tasks.show', $task);
+    }
+  }
+  ```
+
+## Form Request Validation
+
+- Use Form Request classes for validation in `app/Http/Requests/`.
+- Create requests using `php artisan make:request StoreTaskRequest`.
+- Example Form Request:
+  ```php
+  namespace App\Http\Requests;
+  
+  use Illuminate\Foundation\Http\FormRequest;
+  
+  class StoreTaskRequest extends FormRequest
+  {
+    public function authorize(): bool
+    {
+      return true;
+    }
+    
+    public function rules(): array
+    {
+      return [
+        'description' => 'required|string|max:255',
+        'is_done' => 'boolean',
+      ];
+    }
+  }
+  ```
+
+## Server-Side Error Handling
+
+- Use `try/catch` blocks in controllers and services.
+- Throw appropriate exceptions for different error scenarios.
+- Log errors for debugging and compliance.
+- Example:
+  ```php
+  try {
+    $task = Task::findOrFail($id);
+    $task->update($validated);
+    return redirect()->route('tasks.show', $task);
+  } catch (ModelNotFoundException $e) {
+    Log::error('Task not found', ['id' => $id]);
+    return redirect()->back()->with('error', 'Task not found');
+  } catch (Exception $e) {
+    Log::error('Failed to update task', ['error' => $e->getMessage()]);
+    return redirect()->back()->with('error', 'Failed to update task');
+  }
+  ```
+
+</rewritten_file> 

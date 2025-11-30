@@ -1,0 +1,207 @@
+---
+description: Laravel authentication and authorization
+globs: 
+alwaysApply: true
+---
+# 4. Authentication and Authorization
+
+This document details how authentication and authorization are configured and used within the Laravel application.
+
+## Supported User Roles
+
+This application supports exactly **three user roles**:
+
+- **Admin**: Full system access
+  - Manage all users and assign roles
+  - View all data across the system
+  - Generate reports and analytics
+  - System configuration and settings
+  - All Officer and Member permissions
+
+- **Officer**: Management and verification permissions
+  - Process and manage loan applications
+  - Verify and validate documents
+  - Approve or reject loans
+  - View data within their jurisdiction
+  - All Member permissions for their own data
+
+- **Member**: Basic user permissions
+  - Submit loan applications
+  - Upload documents
+  - View own application status
+  - Update own profile
+  - Access personal dashboard
+
+**Important**: Do not create or reference any other roles (e.g., LGU Verifier, Employer, Manager, etc.). All functionality must be implemented using only these three roles.
+
+## Laravel Authentication
+
+- Laravel provides built-in authentication scaffolding via Laravel Breeze or custom implementation.
+- Authentication is configured in `config/auth.php`.
+- Current setup uses username and password authentication.
+- Users are authenticated via the `auth` guard in `routes/web.php`.
+- Example Breeze setup:
+  ```bash
+  composer require laravel/breeze --dev
+  php artisan breeze:install blade
+  npm install && npm run dev
+  php artisan migrate
+  ```
+
+## Authentication Rules
+
+- **User Model (`app/Models/User.php`):**
+  - The User model extends `Authenticatable` and uses Laravel's built-in auth traits.
+  - Add a `role` field to track user roles (Admin, Officer, Member).
+  - Example User model:
+    ```php
+    namespace App\Models;
+    
+    use Illuminate\Foundation\Auth\User as Authenticatable;
+    use Illuminate\Database\Eloquent\Factories\HasFactory;
+    
+    class User extends Authenticatable
+    {
+      use HasFactory;
+      
+      protected $fillable = ['name', 'email', 'password', 'role'];
+      protected $hidden = ['password', 'remember_token'];
+      protected $casts = ['role' => 'string'];
+      
+      public function isAdmin(): bool {
+        return $this->role === 'admin';
+      }
+      
+      public function isOfficer(): bool {
+        return $this->role === 'officer';
+      }
+      
+      public function isMember(): bool {
+        return $this->role === 'member';
+      }
+    }
+    ```
+
+- **Auth Middleware:**
+  - Protect routes with the `auth` middleware.
+  - Use role-based middleware for specific roles: `role:admin`, `role:officer`, etc.
+  - Example route protection:
+    ```php
+    Route::middleware('auth')->group(function () {
+      Route::get('/dashboard', [DashboardController::class, 'index']);
+      Route::middleware('role:admin')->group(function () {
+        Route::get('/admin', [AdminController::class, 'index']);
+      });
+    });
+    ```
+
+- **Protected Routes/Pages:**
+  - Use the `auth()` helper or `Auth` facade to access the current user.
+  - Check authentication status in controllers and views.
+  - Example in controller:
+    ```php
+    public function dashboard()
+    {
+      $user = auth()->user(); // Get current authenticated user
+      return view('dashboard', ['user' => $user]);
+    }
+    ```
+  - Example in Blade view:
+    ```blade
+    @auth
+      <p>Welcome, {{ auth()->user()->name }}</p>
+    @else
+      <p>Please log in</p>
+    @endauth
+    ```
+
+## Role-Based Authorization
+
+- Implement role checks in controllers using the user's role.
+- Create a custom middleware in `app/Http/Middleware/` for role checking.
+- Example middleware:
+  ```php
+  // app/Http/Middleware/RoleMiddleware.php
+  namespace App\Http\Middleware;
+  
+  use Closure;
+  use Illuminate\Http\Request;
+  
+  class RoleMiddleware
+  {
+    public function handle(Request $request, Closure $next, string $role): mixed
+    {
+      if (!auth()->check() || auth()->user()->role !== $role) {
+        abort(403, 'Unauthorized');
+      }
+      return $next($request);
+    }
+  }
+  ```
+- Register middleware in `app/Http/Kernel.php`:
+  ```php
+  protected $routeMiddleware = [
+    // ...
+    'role' => \App\Http\Middleware\RoleMiddleware::class,
+  ];
+  ```
+- Example helper functions in `app/Services/AuthService.php`:
+  ```php
+  public static function requireAdmin(User $user): void {
+    if ($user->role !== 'admin') {
+      abort(403, 'Admin access required');
+    }
+  }
+  
+  public static function requireOfficerOrAdmin(User $user): void {
+    if ($user->role !== 'admin' && $user->role !== 'officer') {
+      abort(403, 'Officer or Admin access required');
+    }
+  }
+  ```
+
+## User Authentication Helpers
+
+- **Auth Facade:** Access authentication information using the `Auth` facade.
+  - `Auth::user()` - Get current authenticated user
+  - `Auth::check()` - Check if user is authenticated
+  - `Auth::id()` - Get current user's ID
+  - `Auth::logout()` - Log out current user
+  - `Auth::guard()` - Access a specific guard
+- **Auth Helper:** Use the `auth()` helper function.
+  - `auth()->user()` - Get current user
+  - `auth()->check()` - Check if authenticated
+  - `auth()->id()` - Get user ID
+  - `auth()->user()->role` - Get user's role
+- **Example usage:**
+  ```php
+  if (auth()->check()) {
+    $user = auth()->user();
+    $userId = auth()->id();
+    $userRole = auth()->user()->role; // 'admin', 'officer', 'member'
+  }
+  ```
+- **Blade Directives:**
+  ```blade
+  @auth
+    <p>Welcome, {{ auth()->user()->name }}</p>
+    @if(auth()->user()->isAdmin())
+      <a href="/admin">Admin Panel</a>
+    @endif
+  @endauth
+  
+  @guest
+    <a href="/login">Login</a>
+  @endguest
+  ```
+
+## Common Authentication Issues
+
+- If auth isn't working, verify the User model extends `Authenticatable`.
+- Ensure auth middleware is applied to protected routes.
+- Check that the `users` table exists and has the correct schema.
+- Verify environment variables are set correctly (especially `APP_KEY`, `DB_*`).
+- Check Laravel logs in `storage/logs/laravel.log` for errors.
+- Run `php artisan migrate` to apply pending migrations.
+- Clear cache with `php artisan cache:clear && php artisan config:clear`.
+- Verify the role field is present in the users table migration. 

@@ -1,0 +1,105 @@
+---
+description: Laravel advanced features and troubleshooting
+globs: 
+alwaysApply: true
+---
+# 6. Advanced Features & Troubleshooting
+
+This document covers advanced Laravel capabilities like Jobs, API Routes, and Middleware, along with performance optimization tips and common troubleshooting steps.
+
+## Advanced Features
+
+These features are configured in `routes/web.php` and `app/Http/` directories.
+
+### Jobs and Queues
+
+- Laravel supports background jobs, useful for tasks like sending emails, processing data, or scheduled operations.
+- Jobs are defined in `app/Jobs/` directory.
+- Example Job definition:
+  ```php
+  namespace App\Jobs;
+  
+  use Illuminate\Bus\Queueable;
+  use Illuminate\Contracts\Queue\ShouldQueue;
+  
+  class SendEmail implements ShouldQueue
+  {
+    use Queueable;
+    
+    public function handle()
+    {
+      // Send email logic
+    }
+  }
+  ```
+- Jobs can be dispatched from controllers or other jobs using `dispatch()`.
+- See [Laravel Jobs Documentation](mdc:https://laravel.com/docs/queues).
+
+### API Routes
+
+- Define custom API endpoints in `routes/api.php` for external integrations (webhooks, third-party services).
+- Example API route:
+  ```php
+  Route::post('/webhooks/stripe', [WebhookController::class, 'handleStripe']);
+  ```
+- Use middleware to protect API routes and validate requests.
+- See [Laravel API Routes Documentation](mdc:https://laravel.com/docs/routing).
+
+### Middleware
+
+- Laravel supports custom middleware for filtering HTTP requests.
+- Useful for logging, custom authentication/authorization checks, request transformation, etc.
+- Example Middleware in `app/Http/Middleware/CheckAdmin.php`:
+  ```php
+  namespace App\Http\Middleware;
+  
+  use Closure;
+  
+  class CheckAdmin
+  {
+    public function handle($request, Closure $next)
+    {
+      if (auth()->check() && auth()->user()->isAdmin()) {
+        return $next($request);
+      }
+      return redirect('/');
+    }
+  }
+  ```
+- Register middleware in `app/Http/Kernel.php` and apply to routes.
+- See [Laravel Middleware Documentation](mdc:https://laravel.com/docs/middleware).
+
+## Performance Optimization
+
+- **Query Optimization:** Use eager loading to prevent N+1 queries: `Task::with('user')->get()`.
+- **Pagination:** For queries returning large lists of data, implement pagination: `Task::paginate(15)`.
+- **Caching:** Cache frequently accessed data using Laravel's cache system.
+- **Database Indexes:** Add indexes on frequently queried columns in migrations.
+- **Query Optimization:**
+  - Select only needed columns: `Task::select('id', 'description')->get()`.
+  - Use `limit()` and `offset()` for large datasets.
+  - Avoid N+1 queries by using `with()` for relationships.
+
+## Troubleshooting
+
+- **Import/Namespace Errors:** If you encounter errors related to missing classes or namespaces, ensure proper `use` statements at the top of files.
+- **Routes Not Working:**
+  - Check `routes/web.php` for correct route definitions.
+  - Verify middleware is applied correctly.
+  - Run `php artisan route:list` to see all registered routes.
+  - Clear route cache: `php artisan route:clear`.
+- **Auth Not Working:**
+  - Verify the User model extends `Authenticatable`.
+  - Ensure auth middleware is applied to protected routes.
+  - Check that the `users` table exists and has the correct schema.
+  - Verify environment variables are set correctly.
+- **Database Issues:**
+  - Ensure migrations have been run: `php artisan migrate`.
+  - Check database connection in `.env` file.
+  - Verify database server is running.
+  - Run `php artisan migrate:reset` to reset migrations (development only).
+- **Build/Runtime Errors:**
+  - Check namespace and import statements carefully.
+  - Ensure all dependencies are installed: `composer install`.
+  - Clear cache: `php artisan cache:clear && php artisan config:clear`.
+  - Check logs in `storage/logs/laravel.log` for detailed error messages. 

@@ -1,0 +1,327 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom LoanEase Animations */
+@layer utilities {
+    /* Fade in animation */
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Slide in from left */
+    .animate-slide-in-left {
+        animation: slideInLeft 0.3s ease-out;
+    }
+    
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Slide in from right */
+    .animate-slide-in-right {
+        animation: slideInRight 0.3s ease-out;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Scale in */
+    .animate-scale-in {
+        animation: scaleIn 0.2s ease-out;
+    }
+    
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    /* Pulse animation for notifications */
+    .animate-pulse-once {
+        animation: pulseOnce 0.5s ease-out;
+    }
+    
+    @keyframes pulseOnce {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    /* Shimmer loading effect */
+    .shimmer {
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.4) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+        100% {
+            background-position: 200% 0;
+        }
+    }
+    
+    /* Gradient text */
+    .text-gradient {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Glass morphism variations */
+    .glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .glass-dark {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    
+    /* Card hover effects */
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.2);
+    }
+    
+    /* Button press effect */
+    .btn-press:active {
+        transform: scale(0.98);
+    }
+    
+    /* Focus ring utility */
+    .focus-ring {
+        @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2;
+    }
+    
+    /* Smooth scroll */
+    .scroll-smooth {
+        scroll-behavior: smooth;
+    }
+    
+    /* Hide scrollbar but allow scrolling */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Custom scrollbar styling */
+    .scrollbar-custom::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .scrollbar-custom::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    .scrollbar-custom::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+}
+
+/* Custom Form Styles */
+@layer components {
+    /* Input group with icon */
+    .input-group {
+        @apply relative;
+    }
+    
+    .input-group .input-icon {
+        @apply absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none;
+    }
+    
+    .input-group input,
+    .input-group select {
+        @apply pl-10;
+    }
+    
+    /* Floating label effect */
+    .floating-label {
+        @apply relative;
+    }
+    
+    .floating-label input:focus + label,
+    .floating-label input:not(:placeholder-shown) + label {
+        @apply text-xs -top-2 bg-white px-1 text-indigo-600;
+    }
+    
+    .floating-label label {
+        @apply absolute left-3 top-3 text-slate-400 transition-all pointer-events-none;
+    }
+    
+    /* Table styles */
+    .table-modern {
+        @apply w-full;
+    }
+    
+    .table-modern thead {
+        @apply bg-slate-50/50;
+    }
+    
+    .table-modern th {
+        @apply px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider;
+    }
+    
+    .table-modern td {
+        @apply px-4 py-4 text-sm text-slate-600;
+    }
+    
+    .table-modern tbody tr {
+        @apply border-b border-slate-100 hover:bg-slate-50/50 transition-colors;
+    }
+    
+    /* Status indicator */
+    .status-dot {
+        @apply w-2 h-2 rounded-full inline-block mr-2;
+    }
+    
+    .status-dot.success {
+        @apply bg-emerald-500;
+    }
+    
+    .status-dot.warning {
+        @apply bg-amber-500;
+    }
+    
+    .status-dot.danger {
+        @apply bg-rose-500;
+    }
+    
+    .status-dot.info {
+        @apply bg-blue-500;
+    }
+    
+    /* Progress bar */
+    .progress-bar {
+        @apply h-2 bg-slate-200 rounded-full overflow-hidden;
+    }
+    
+    .progress-bar .progress-fill {
+        @apply h-full rounded-full transition-all duration-500 ease-out;
+    }
+    
+    /* Stat card styles */
+    .stat-card {
+        @apply bg-white rounded-2xl p-6 shadow-sm border border-slate-200;
+    }
+    
+    .stat-card .stat-icon {
+        @apply w-12 h-12 rounded-xl flex items-center justify-center;
+    }
+    
+    .stat-card .stat-value {
+        @apply text-2xl font-bold text-slate-900;
+    }
+    
+    .stat-card .stat-label {
+        @apply text-sm text-slate-500;
+    }
+    
+    /* Notification badge */
+    .notification-badge {
+        @apply absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center;
+    }
+    
+    /* Avatar styles */
+    .avatar {
+        @apply w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold;
+    }
+    
+    .avatar-sm {
+        @apply w-8 h-8 text-sm;
+    }
+    
+    .avatar-lg {
+        @apply w-14 h-14 text-lg;
+    }
+    
+    /* Dropdown menu */
+    .dropdown-menu {
+        @apply absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50;
+    }
+    
+    .dropdown-item {
+        @apply block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        @apply text-center py-12;
+    }
+    
+    .empty-state .empty-icon {
+        @apply w-16 h-16 mx-auto text-slate-300 mb-4;
+    }
+    
+    .empty-state .empty-title {
+        @apply text-lg font-medium text-slate-900 mb-2;
+    }
+    
+    .empty-state .empty-description {
+        @apply text-slate-500 mb-4;
+    }
+}

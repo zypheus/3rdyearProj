@@ -1,0 +1,244 @@
+# LoanEase - Loan Management System - Development Guidelines
+
+This is a **Laravel 12 web application** for managing loan applications, approvals, payments, and reporting with comprehensive role-based access control. Always consider the following background information and rules when planning and implementing features.
+
+## Quick Reference
+
+### Project Overview
+- **Framework**: Laravel 12 (PHP 8+)
+- **Frontend**: Blade Templates, Tailwind CSS
+- **Frontend Tooling**: Vite (yarn dev for development, yarn build for production)
+- **Database**: MySQL (via Eloquent ORM)
+- **Authentication**: Laravel Breeze with Role-Based Access Control (RBAC)
+- **Hosting**: HTTPS-enabled server (shared hosting, VPS, cloud platforms)
+- **Key Features**: Loan applications, verification, approval, payment tracking, document uploads, reporting
+
+### Core Concepts
+- **Three-tier Architecture**: Presentation (Blade/Tailwind), Application (Laravel), Database (MySQL)
+- **Role-Based Access Control (RBAC) - THREE ROLES ONLY**: Admin, Officer, Member (NO other roles allowed)
+- **Loan Management**: Loan applications, approvals, payments, document verification
+- **Key Entities**: Users, Loans, Payments, Documents, Audit Logs
+
+### Directory Structure
+```
+app/
+  Models/          # Eloquent models (User, Loan, Payment, Document, AuditLog)
+  Http/
+    Controllers/   # Feature-based controllers (LoanController, PaymentController, etc.)
+    Middleware/    # RBAC middleware, custom middleware
+    Requests/      # Form validation requests
+  Services/        # Business logic services (LoanService, PaymentService, etc.)
+  Policies/        # Authorization policies for RBAC (Admin, Officer, Member only)
+resources/
+  views/
+    layouts/       # Main layout templates
+    auth/          # Authentication views
+    loans/         # Loan-related views
+    payments/      # Payment-related views
+    admin/         # Admin dashboard views
+    reports/       # Report views
+  css/             # Tailwind CSS
+database/
+  migrations/      # Database schema migrations
+  seeders/         # Database seeders for initial data
+routes/
+  web.php          # Web routes with middleware groups
+config/
+  app.php          # Application configuration
+vite.config.js     # Vite frontend asset bundling configuration
+
+
+### Common Patterns
+- Define models in `app/Models/` with relationships
+- Create controllers in `app/Http/Controllers/` organized by feature
+- Use Eloquent ORM for database queries
+- Implement business logic in `app/Services/` for reusability
+- Use middleware for authentication and role-based access control (Admin, Officer, Member ONLY)
+- Document features in `./ai/docs` with:
+  - One markdown file per feature (e.g. `./ai/docs/loan-application.md`)
+  - Database schema and model relationships
+  - User workflows and business logic
+  - API endpoints or controller methods
+  - Validation rules and error handling
+
+## Background Information
+
+### Laravel Framework
+
+- Laravel is a PHP web application framework with elegant syntax and powerful features.
+- It uses the MVC (Model-View-Controller) pattern for organizing code.
+- Eloquent ORM provides an expressive way to interact with databases.
+- Middleware allows filtering HTTP requests before they reach controllers.
+- Blade is a lightweight templating engine for rendering views.
+- Vite provides fast frontend asset bundling and hot module replacement (HMR).
+
+### Database Design (MySQL)
+
+Key entities for the LoanEase System:
+
+- **Role**: User roles (Admin, Officer, Member - ONLY THESE THREE)
+- **User**: Authentication and user accounts with role assignment
+- **Loan**: Loan applications with status tracking (pending, approved, rejected, active, completed)
+- **Payment**: Loan payment records
+- **Document**: User-uploaded documents for verification
+- **AuditLog**: System activity logging for compliance and security
+
+### Authentication & Authorization
+
+- Laravel Breeze provides simple authentication scaffolding
+- Spatie Permission package enables role-based access control with three roles: Admin, Officer, Member
+- Middleware protects routes based on user roles
+- Policies authorize specific actions on resources (ONLY with three roles)
+
+### Validation & Error Handling
+
+- Use Form Request classes for validation
+- Implement try-catch blocks in controllers
+- Return appropriate HTTP status codes
+- Log errors for debugging and compliance
+
+## Rules
+
+### General Rules
+
+- Always reference the database schema (migrations) as your source of truth for data structure
+- Always reference `./ai/docs` for feature specifications and workflows
+- Organize code by feature: controllers, models, services, views in feature-specific directories
+- Use Eloquent relationships to define model associations
+- Implement RBAC middleware on all protected routes using ONLY: Admin, Officer, Member roles
+- Write migrations for all database schema changes
+- Use environment variables (.env) for sensitive configuration
+- **CRITICAL: NO ROLES BEYOND ADMIN, OFFICER, MEMBER** - Never add LGU Verifier, Employer, or other roles
+
+### Laravel Code Organization
+
+- **Models**: Define in `app/Models/`, use relationships for associations, add role attribute to User model
+- **Controllers**: Feature-based in `app/Http/Controllers/`, keep logic minimal
+- **Services**: Business logic in `app/Services/`, reusable across controllers
+- **Middleware**: Authentication and RBAC in `app/Http/Middleware/` (check for Admin, Officer, or Member roles only)
+- **Requests**: Validation in `app/Http/Requests/`
+- **Views**: Blade templates in `resources/views/`, organized by feature
+- **Vite Config**: Configure asset bundling, import paths, and HMR in `vite.config.js`
+
+### Database Rules
+
+- Define all tables in migrations within `database/migrations/`
+- Use Eloquent relationships (hasMany, belongsTo, etc.) in models
+- Always include timestamps (created_at, updated_at) on tables
+- Use foreign keys for referential integrity
+- Add role column to users table with enum or string type (ENUM: 'admin', 'officer', 'member')
+- Run migrations with `php artisan migrate`
+- Create seeders for initial data in `database/seeders/`
+- **CRITICAL: Role column should only allow 'admin', 'officer', or 'member' values**
+
+### Authentication & RBAC - THREE ROLES ONLY
+
+- **Admin**: Full system access - manage users, view all data, generate reports, system configuration
+- **Officer**: Process applications, verify documents, approve/reject loans, process requests
+- **Member**: Submit applications, upload documents, view own application status
+- Protect routes with `auth` middleware
+- Use role-based middleware for specific roles: `role:admin`, `role:officer`, `role:member`
+- Define permissions in policies (`app/Policies/`) using only three roles
+- Check authorization in controllers: `$this->authorize('action', $resource)` where role checks are restricted to Admin, Officer, Member
+- Log all sensitive actions in AuditLog for compliance
+- **NEVER add roles like: LGU Verifier, Employer, Manager, or any other custom role**
+
+### Blade Templates & Views
+
+- Use Blade syntax for templating: `{{ $variable }}`, `@if`, `@foreach`, etc.
+- Organize views by feature in `resources/views/{feature}/`
+- Use Tailwind CSS for styling
+- Create reusable components in `resources/views/components/`
+- Use form helpers: `@csrf`, `@method('PUT')` for security
+- Use role directives: `@admin`, `@officer`, `@member` if available, or check `auth()->user()->role`
+
+### Frontend Asset Compilation
+
+- Use Vite for all frontend asset bundling
+- Development workflow: `yarn dev` (starts Vite dev server with HMR)
+- Production workflow: `yarn build` (compiles and minifies assets)
+- Configure asset paths in `vite.config.js`
+- Import assets in views: `<link rel="stylesheet" href="{{ mix('css/app.css') }}">`
+- Use `@vite` directive in Blade templates (Laravel 9+)
+
+### Validation
+
+- Use Form Request classes for complex validation
+- Define validation rules in `app/Http/Requests/{Feature}Request.php`
+- Use Laravel's built-in validators and custom rules
+- Return validation errors with appropriate messages
+- Example:
+  ```php
+  public function rules()
+  {
+    return [
+      'email' => 'required|email|unique:users',
+      'loan_amount' => 'required|numeric|min:1000|max:500000',
+      'role' => 'required|in:admin,officer,member', // Only three roles allowed
+    ];
+  }
+  ```
+
+### Error Handling
+
+- Use try-catch blocks in controllers and services
+- Log errors using Laravel's logging: `Log::error('message', $context)`
+- Return appropriate HTTP status codes (200, 400, 401, 403, 404, 500)
+- Display user-friendly error messages in views
+- Example:
+  ```php
+  try {
+    $loan = Loan::findOrFail($id);
+    // Process loan
+  } catch (ModelNotFoundException $e) {
+    Log::error('Loan not found', ['id' => $id]);
+    return redirect()->back()->with('error', 'Loan not found');
+  }
+  ```
+
+### Tailwind CSS
+
+- Use Tailwind for all styling
+- Use responsive classes: `sm:`, `md:`, `lg:`, `xl:`
+- Create reusable component classes with `@apply`
+- Avoid inline styles
+
+### Performance Optimization
+
+- Use eager loading to prevent N+1 queries: `Loan::with('payments')->get()`
+- Implement pagination for large datasets: `Loan::paginate(15)`
+- Cache frequently accessed data
+- Use database indexes on foreign keys and frequently queried columns
+- Optimize queries with select specific columns: `Loan::select('id', 'amount', 'status')->get()`
+
+### Security Best Practices
+
+- Always use CSRF protection: `@csrf` in forms
+- Hash passwords: `Hash::make($password)`
+- Validate and sanitize all user inputs
+- Use prepared statements with Eloquent to prevent SQL injection
+- Implement rate limiting on sensitive endpoints
+- Use HTTPS for all communication
+- Store sensitive data in .env, never in code
+- **Verify user role before granting access**: `if (auth()->user()->role !== 'admin') { ... }`
+- **Log sensitive actions** to AuditLog for compliance
+- **Never trust client-side role checks** - always verify on server
+
+### Testing & Debugging
+
+- Write tests for critical features
+- Use `dd()` for debugging during development
+- Use Laravel Tinker for interactive testing: `php artisan tinker`
+- Check logs in `storage/logs/laravel.log`
+- Use browser developer tools for frontend debugging
+- Test with each of the three roles: Admin, Officer, Member
+
+### Troubleshooting
+
+- If routes aren't working, check `routes/web.php` and middleware
+- If database queries fail, check model relationships and migrations
+- If authentication fails, verify `.env` configuration and user roles (must be 'admin', 'officer', or 'member')
+- If views don't render, check Blade syntax and variable availability
+- For permission issues, verify RBAC middleware and policies (check only three roles are used)
+- Run `php artisan cache:clear` and `php artisan config:clear` if changes don't appear
+- If Vite assets don't load, run `yarn build` or `yarn dev` and check `vite.config.js`

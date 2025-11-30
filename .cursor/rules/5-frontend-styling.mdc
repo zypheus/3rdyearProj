@@ -1,0 +1,86 @@
+---
+description: Laravel frontend and styling conventions
+globs: 
+alwaysApply: true
+---
+# 5. Frontend (Blade) and Styling (TailwindCSS)
+
+This document outlines conventions for building the user interface with Blade templates and styling it with Tailwind CSS.
+
+## Blade Template Conventions
+
+- **Imports/Includes:**
+  - Use Blade directives to include components and views.
+    - ✅ `@include('components.header')`
+    - ✅ `@component('components.card')`
+    - ❌ `<?php include '../components/header.php'; ?>`
+  
+- **Data Passing:**
+  - Pass data from controllers to views using the second argument of `view()`.
+    - ✅ `return view('tasks.index', ['tasks' => $tasks]);`
+    - ❌ Global variables or direct database queries in views
+- **Blade Directives:**
+  - Use Blade directives for control structures: `@if`, `@foreach`, `@while`, `@for`, etc.
+  - Use `@auth` and `@guest` for authentication checks.
+  - Use `@can` and `@cannot` for authorization checks.
+  - Example:
+    ```blade
+    @foreach ($tasks as $task)
+      <div>{{ $task->description }}</div>
+    @endforeach
+    
+    @auth
+      <p>Welcome, {{ auth()->user()->name }}</p>
+    @endauth
+    ```
+
+- **Error Handling (Client-side):**
+  - Display validation errors using `$errors` variable.
+  - Use `@error` directive for field-specific errors.
+  - Example:
+    ```blade
+    @error('email')
+      <span class="text-red-500">{{ $message }}</span>
+    @enderror
+    ```
+
+## Blade Components
+
+- Create reusable Blade components in `resources/views/components/`.
+- Use `@component` or `<x-component-name>` syntax to include components.
+- Example component (`resources/views/components/card.blade.php`):
+  ```blade
+  <div class="bg-white rounded shadow p-4">
+    {{ $slot }}
+  </div>
+  ```
+- Usage:
+  ```blade
+  <x-card>
+    <h2>Card Title</h2>
+    <p>Card content</p>
+  </x-card>
+  ```
+
+## TailwindCSS Conventions
+
+- **Primary Styling Method:** Use Tailwind CSS utility classes directly in your Blade templates for styling.
+- **Avoid Inline Styles:** Generally avoid using the `style` attribute unless absolutely necessary for dynamic styles that cannot be achieved with Tailwind classes.
+- **Reusability:** For complex or frequently reused style combinations, consider:
+  - Creating reusable Blade components that encapsulate the structure and styling.
+  - If necessary, using `@apply` within a global CSS file (`resources/css/app.css` or similar) to create custom reusable classes, but prefer component composition first.
+    ```css
+    /* Example in app.css */
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+
+    .btn-primary {
+      @apply px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300;
+    }
+    ```
+- **Responsive Design:** Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) to apply styles conditionally based on screen size.
+  - ✅ `<div class="w-full md:w-1/2 lg:w-1/3">...</div>`
+- **Pag-IBIG Branding:** Use blue and yellow colors for Pag-IBIG branding.
+  - ✅ `<div class="bg-blue-600 text-yellow-400">...</div>`
+- **Configuration:** If you need to customize Tailwind (e.g., add custom colors, fonts, spacing), modify the `tailwind.config.js` file in the project root. 
