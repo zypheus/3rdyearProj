@@ -11,6 +11,9 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800&display=swap" rel="stylesheet" />
 
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -75,43 +78,72 @@
                 </header>
             @endisset
 
-            <!-- Flash Messages -->
+            <!-- Flash Messages with SweetAlert2 -->
             @if (session('success') || session('error') || session('warning') || session('info'))
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-                    @if (session('success'))
-                        <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="font-medium">{{ session('success') }}</span>
-                            <button @click="show = false" class="ml-auto text-emerald-600 hover:text-emerald-800">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                            </button>
-                        </div>
-                    @endif
-                    @if (session('error'))
-                        <div class="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="font-medium">{{ session('error') }}</span>
-                            <button @click="show = false" class="ml-auto text-red-600 hover:text-red-800">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                            </button>
-                        </div>
-                    @endif
-                    @if (session('warning'))
-                        <div class="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="font-medium">{{ session('warning') }}</span>
-                            <button @click="show = false" class="ml-auto text-amber-600 hover:text-amber-800">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                            </button>
-                        </div>
-                    @endif
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        @if (session('success'))
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: "{{ session('success') }}",
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 4000,
+                                timerProgressBar: true,
+                                customClass: {
+                                    popup: 'rounded-xl shadow-lg'
+                                }
+                            });
+                        @endif
+                        @if (session('error'))
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: "{{ session('error') }}",
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 5000,
+                                timerProgressBar: true,
+                                customClass: {
+                                    popup: 'rounded-xl shadow-lg'
+                                }
+                            });
+                        @endif
+                        @if (session('warning'))
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Warning!',
+                                text: "{{ session('warning') }}",
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 5000,
+                                timerProgressBar: true,
+                                customClass: {
+                                    popup: 'rounded-xl shadow-lg'
+                                }
+                            });
+                        @endif
+                        @if (session('info'))
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Info',
+                                text: "{{ session('info') }}",
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 4000,
+                                timerProgressBar: true,
+                                customClass: {
+                                    popup: 'rounded-xl shadow-lg'
+                                }
+                            });
+                        @endif
+                    });
+                </script>
             @endif
 
             <!-- Page Content -->
@@ -136,5 +168,112 @@
                 </div>
             </footer>
         </div>
+
+        <!-- SweetAlert2 Helper Functions -->
+        <script>
+            // Confirm delete action with SweetAlert
+            function confirmDelete(event, title = 'Are you sure?', text = 'This action cannot be undone.') {
+                event.preventDefault();
+                const form = event.target.closest('form');
+                
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl px-6 py-2.5 font-semibold',
+                        cancelButton: 'rounded-xl px-6 py-2.5 font-semibold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            }
+
+            // Confirm action with SweetAlert (generic)
+            function confirmAction(event, title = 'Confirm Action', text = 'Are you sure you want to proceed?', confirmText = 'Yes, proceed', icon = 'question') {
+                event.preventDefault();
+                const form = event.target.closest('form');
+                
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: confirmText,
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl px-6 py-2.5 font-semibold',
+                        cancelButton: 'rounded-xl px-6 py-2.5 font-semibold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            }
+
+            // Confirm rejection with SweetAlert
+            function confirmReject(event) {
+                event.preventDefault();
+                const form = event.target.closest('form');
+                
+                Swal.fire({
+                    title: 'Reject Loan Application?',
+                    text: 'This will reject the loan application. Please ensure you have provided a reason.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, reject it',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl px-6 py-2.5 font-semibold',
+                        cancelButton: 'rounded-xl px-6 py-2.5 font-semibold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            }
+
+            // Confirm disbursement with SweetAlert
+            function confirmDisburse(event) {
+                event.preventDefault();
+                const form = event.target.closest('form');
+                
+                Swal.fire({
+                    title: 'Disburse Funds?',
+                    text: 'This will disburse funds and activate the loan. This action cannot be undone.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, disburse funds',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl px-6 py-2.5 font-semibold',
+                        cancelButton: 'rounded-xl px-6 py-2.5 font-semibold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            }
+        </script>
     </body>
 </html>

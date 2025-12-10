@@ -35,6 +35,12 @@
                     <x-status-badge :status="$payment->status" size="lg" />
                 </div>
 
+                @if(!empty($simulationMode) && $payment->isPending() && auth()->id() === $payment->user_id)
+                    <div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-700">
+                        Simulation Mode: This payment is pending. You may confirm or reject it below. No real transaction occurred.
+                    </div>
+                @endif
+
                 {{-- Payment Details Grid --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {{-- Left Column --}}
@@ -142,44 +148,69 @@
                 </div>
             </x-card>
 
-            {{-- Status Update (for pending payments) --}}
-            @if (auth()->user()->isAdminOrOfficer() && $payment->isPending())
-                <x-card>
-                    <h4 class="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
-                        <div class="p-2 bg-amber-100 rounded-lg">
-                            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+            {{-- Status / Simulation Actions --}}
+            @if ($payment->isPending())
+                @if(!empty($simulationMode) && auth()->id() === $payment->user_id)
+                    <x-card x-data="{processing:false, delay: {{ (int)($simulationDelayMs ?? 0) }}, start(e){processing=true; const form=e.target.closest('form'); setTimeout(()=>form.submit(), delay);} }">
+                        <h4 class="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                            <div class="p-2 bg-indigo-100 rounded-lg">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            Simulation Actions
+                        </h4>
+                        <p class="text-sm text-indigo-700 mb-4">Confirm or reject this simulated payment. A short delay ({{ (int)($simulationDelayMs ?? 0) }} ms) is applied to mimic processing.</p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <form method="POST" action="{{ route('payments.status', $payment) }}" class="flex-1" @submit.prevent="start($event)">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="confirmed">
+                                <button :disabled="processing" type="submit" class="w-full inline-flex justify-center items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 border border-transparent rounded-xl font-semibold text-sm text-white shadow-sm hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Confirm Simulation
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('payments.status', $payment) }}" class="flex-1" @submit.prevent="start($event)">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="rejected">
+                                <button :disabled="processing" type="submit" class="w-full inline-flex justify-center items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-600 to-rose-700 border border-transparent rounded-xl font-semibold text-sm text-white shadow-sm hover:from-rose-700 hover:to-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50" onclick="return confirm('Reject this simulated payment?')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Reject Simulation
+                                </button>
+                            </form>
                         </div>
-                        Update Payment Status
-                    </h4>
-                    <p class="text-sm text-slate-500 mb-4">Review and update the status of this payment.</p>
-                    
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <form method="POST" action="{{ route('payments.status', $payment) }}" class="flex-1">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="status" value="confirmed">
-                            <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 border border-transparent rounded-xl font-semibold text-sm text-white shadow-sm hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                Confirm Payment
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ route('payments.status', $payment) }}" class="flex-1">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="status" value="rejected">
-                            <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-600 to-rose-700 border border-transparent rounded-xl font-semibold text-sm text-white shadow-sm hover:from-rose-700 hover:to-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-200" onclick="return confirm('Reject this payment?')">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                Reject Payment
-                            </button>
-                        </form>
-                    </div>
-                </x-card>
+                    </x-card>
+                @elseif(auth()->user()->isAdminOrOfficer())
+                    <x-card>
+                        <h4 class="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                            <div class="p-2 bg-amber-100 rounded-lg">
+                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            Update Payment Status
+                        </h4>
+                        <p class="text-sm text-slate-500 mb-4">Review and update the status of this payment.</p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <form method="POST" action="{{ route('payments.status', $payment) }}" class="flex-1">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="confirmed">
+                                <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 border border-transparent rounded-xl font-semibold text-sm text-white shadow-sm hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Confirm Payment
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('payments.status', $payment) }}" class="flex-1">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="rejected">
+                                <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-600 to-rose-700 border border-transparent rounded-xl font-semibold text-sm text-white shadow-sm hover:from-rose-700 hover:to-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-200" onclick="return confirm('Reject this payment?')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Reject Payment
+                                </button>
+                            </form>
+                        </div>
+                    </x-card>
+                @endif
             @endif
         </div>
     </div>

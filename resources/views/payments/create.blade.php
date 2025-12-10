@@ -3,7 +3,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-slate-900">
-                    {{ __('Record Payment') }}
+                    {{ request('advance') ? __('Submit Advance Payment') : __('Record Payment') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-500">For Loan #{{ $loan->id }} - {{ $loan->user->name }}</p>
             </div>
@@ -18,6 +18,70 @@
 
     <div class="py-8">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            @if(request('advance'))
+                {{-- Advance Payment Mode --}}
+                <div class="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-700">
+                    <strong>Advance Payment:</strong> Your payment will be pending until confirmed by an officer. You can pay ahead of schedule.
+                </div>
+
+                <x-card>
+                    <form method="POST" action="{{ route('loans.payments.advance.store', $loan) }}" class="space-y-6">
+                        @csrf
+                        <div>
+                            <label for="amount" class="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Amount (₱)
+                            </label>
+                            <input type="number" id="amount" name="amount" value="{{ old('amount') }}" min="1" step="0.01" required
+                                class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
+                                placeholder="Enter payment amount">
+                            <x-input-error :messages="$errors->get('amount')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <label for="payment_date" class="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Payment Date
+                            </label>
+                            <input type="date" id="payment_date" name="payment_date" value="{{ old('payment_date', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required
+                                class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200">
+                            <x-input-error :messages="$errors->get('payment_date')" class="mt-2" />
+                        </div>
+
+                        <input type="hidden" name="payment_method" value="online">
+
+                        <div>
+                            <label for="notes" class="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                                </svg>
+                                Notes (Optional)
+                            </label>
+                            <textarea id="notes" name="notes" rows="3" maxlength="500"
+                                class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
+                                placeholder="Add any additional notes...">{{ old('notes') }}</textarea>
+                            <x-input-error :messages="$errors->get('notes')" class="mt-2" />
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                            <a href="{{ route('loans.payments.index', $loan) }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-medium text-sm text-slate-700 hover:bg-slate-50 transition-all duration-200">
+                                Cancel
+                            </a>
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 border border-transparent rounded-xl font-bold text-base text-white shadow-lg hover:from-indigo-700 hover:to-indigo-800 hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200">
+                                <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                💰 Submit Advance Payment
+                            </button>
+                        </div>
+                    </form>
+                </x-card>
+            @else
+                {{-- Regular Officer Payment Mode --}}
             {{-- Loan Summary --}}
             <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100 p-6">
                 <div class="flex items-center gap-3 mb-4">
@@ -63,6 +127,12 @@
                             Payment Details
                         </h3>
 
+                        @if(!empty($simulationMode) && !empty($isSimulationMember))
+                            <div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-3">
+                                <svg class="w-5 h-5 text-indigo-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <p class="text-sm text-indigo-800">Simulation Mode: You are creating a simulated payment. No real transaction occurs. After creating it you can confirm or reject it to see how the system responds.</p>
+                            </div>
+                        @endif
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {{-- Payment Amount --}}
                             <div>
@@ -92,42 +162,35 @@
                             </div>
 
                             {{-- Principal Amount --}}
-                            <div>
-                                <label for="principal_amount" class="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
-                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                    </svg>
-                                    Principal Amount (₱)
-                                    <span class="text-xs text-slate-400">(Optional)</span>
-                                </label>
-                                <input type="number" id="principal_amount" name="principal_amount" value="{{ old('principal_amount') }}" min="0" step="0.01"
-                                    class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200"
-                                    placeholder="0.00">
-                                <x-input-error :messages="$errors->get('principal_amount')" class="mt-2" />
-                            </div>
-
-                            {{-- Interest Amount --}}
-                            <div>
-                                <label for="interest_amount" class="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
-                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
-                                    </svg>
-                                    Interest Amount (₱)
-                                    <span class="text-xs text-slate-400">(Optional)</span>
-                                </label>
-                                <input type="number" id="interest_amount" name="interest_amount" value="{{ old('interest_amount') }}" min="0" step="0.01"
-                                    class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200"
-                                    placeholder="0.00">
-                                <x-input-error :messages="$errors->get('interest_amount')" class="mt-2" />
-                            </div>
+                            @if(empty($simulationMode) || empty($isSimulationMember))
+                                <div>
+                                    <label for="principal_amount" class="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                        Principal Amount (₱) <span class="text-xs text-slate-400">(Optional)</span>
+                                    </label>
+                                    <input type="number" id="principal_amount" name="principal_amount" value="{{ old('principal_amount') }}" min="0" step="0.01" class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200" placeholder="0.00">
+                                    <x-input-error :messages="$errors->get('principal_amount')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <label for="interest_amount" class="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                                        Interest Amount (₱) <span class="text-xs text-slate-400">(Optional)</span>
+                                    </label>
+                                    <input type="number" id="interest_amount" name="interest_amount" value="{{ old('interest_amount') }}" min="0" step="0.01" class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200" placeholder="0.00">
+                                    <x-input-error :messages="$errors->get('interest_amount')" class="mt-2" />
+                                </div>
+                            @else
+                                <div class="md:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600">
+                                    For simulation the full amount is treated as principal; interest is ignored.
+                                </div>
+                            @endif
                         </div>
-
-                        <div class="mt-3 flex items-start gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                            <svg class="w-5 h-5 text-slate-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <p class="text-sm text-slate-600">If principal and interest amounts are left blank, the entire amount will be applied to principal.</p>
-                        </div>
+                        @if(empty($simulationMode) || empty($isSimulationMember))
+                            <div class="mt-3 flex items-start gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                                <svg class="w-5 h-5 text-slate-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <p class="text-sm text-slate-600">If principal and interest amounts are left blank, the entire amount will be applied to principal.</p>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Divider --}}
@@ -155,12 +218,14 @@
                                 </label>
                                 <select id="payment_method" name="payment_method" required
                                     class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 bg-white">
-                                    <option value="">Select method...</option>
-                                    @foreach ($paymentMethods as $method)
-                                        <option value="{{ $method }}" {{ old('payment_method') === $method ? 'selected' : '' }}>
-                                            {{ ucfirst(str_replace('_', ' ', $method)) }}
-                                        </option>
-                                    @endforeach
+                                    @if(empty($simulationMode) || empty($isSimulationMember))
+                                        <option value="">Select method...</option>
+                                        @foreach ($paymentMethods as $method)
+                                            <option value="{{ $method }}" {{ old('payment_method') === $method ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $method)) }}</option>
+                                        @endforeach
+                                    @else
+                                        <option value="online" selected>Online (Simulated)</option>
+                                    @endif
                                 </select>
                                 <x-input-error :messages="$errors->get('payment_method')" class="mt-2" />
                             </div>
@@ -206,10 +271,11 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Record Payment
+                            {{ (!empty($simulationMode) && !empty($isSimulationMember)) ? 'Create Simulated Payment' : 'Record Payment' }}
                         </button>
                     </div>
                 </form>
+            @endif
             </x-card>
         </div>
     </div>

@@ -136,4 +136,11 @@ class AuditService
     public const ACTION_DOCUMENT_VERIFIED = 'document_verified';
     public const ACTION_DOCUMENT_REJECTED = 'document_rejected';
     public const ACTION_PAYMENT_RECORDED = 'payment_recorded';
+    // Simulation-specific actions (no real money movement)
+    public const ACTION_PAYMENT_SIMULATION_STARTED = 'payment_simulation_started';
+    public const ACTION_PAYMENT_SIMULATION_CONFIRMED = 'payment_simulation_confirmed';
+    public const ACTION_PAYMENT_SIMULATION_FAILED = 'payment_simulation_failed';
+    // Disbursement and schedule actions
+    public const ACTION_LOAN_SCHEDULE_CONFIRMED = 'loan_schedule_confirmed';
+    public const ACTION_PAYMENT_SUBMITTED_PENDING = 'payment_submitted_pending';
 }

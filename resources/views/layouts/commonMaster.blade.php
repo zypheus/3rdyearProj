@@ -28,6 +28,9 @@
     <!-- Include Styles -->
     @include('layouts/sections/styles')
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- Include Scripts for customizer, helper, analytics, config -->
     @include('layouts/sections/scriptsIncludes')
 </head>

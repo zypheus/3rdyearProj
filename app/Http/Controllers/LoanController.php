@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Loan;
 use App\Models\User;
 use App\Services\AuditService;
+use App\Services\CalamityLoanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -71,7 +72,7 @@ class LoanController extends Controller
      * Show the form for creating a new loan.
      * Only Members can create loan applications.
      */
-    public function create()
+    public function create(CalamityLoanService $calamityService)
     {
         $user = Auth::user();
 
@@ -83,6 +84,9 @@ class LoanController extends Controller
 
         return view('loans.create', [
             'loanTypes' => Loan::TYPES,
+            'loanTypeLabels' => config('loans.type_labels', []),
+            'loanTypeDescriptions' => config('loans.type_descriptions', []),
+            'calamityConfig' => $calamityService->getCalamityLoanDefaults(),
         ]);
     }
 
@@ -90,7 +94,7 @@ class LoanController extends Controller
      * Store a newly created loan.
      * Only Members can submit loan applications.
      */
-    public function store(Request $request)
+    public function store(Request $request, CalamityLoanService $calamityService)
     {
         $user = Auth::user();
 
@@ -100,40 +104,74 @@ class LoanController extends Controller
                 ->with('error', 'Only members can apply for loans.');
         }
 
-        $validated = $request->validate([
-            'loan_type' => ['required', 'in:' . implode(',', Loan::TYPES)],
-            'amount' => ['required', 'numeric', 'min:1000', 'max:1000000'],
-            'term_months' => ['required', 'integer', 'min:1', 'max:60'],
-            'interest_rate' => ['required', 'numeric', 'min:0', 'max:50'],
-            'purpose' => ['nullable', 'string', 'max:1000'],
-        ]);
+        $isCalamityLoan = $request->loan_type === Loan::TYPE_CALAMITY;
 
-        $loan = Loan::create([
-            'user_id' => $user->id,
-            'loan_type' => $validated['loan_type'],
-            'amount' => $validated['amount'],
-            'term_months' => $validated['term_months'],
-            'interest_rate' => $validated['interest_rate'],
-            'purpose' => $validated['purpose'] ?? null,
-            'status' => Loan::STATUS_PENDING,
-        ]);
+        // Different validation rules for calamity vs regular loans
+        if ($isCalamityLoan) {
+            $validated = $request->validate([
+                'loan_type' => ['required', 'in:' . Loan::TYPE_CALAMITY],
+                'eligible_amount' => ['required', 'numeric', 'min:' . config('loans.calamity.min_eligible_amount', 5000), 'max:' . config('loans.calamity.max_eligible_amount', 500000)],
+                'term_months' => ['required', 'integer', 'in:' . implode(',', config('loans.calamity.term_options', [24, 36]))],
+                'purpose' => ['nullable', 'string', 'max:1000'],
+            ]);
+
+            // Validate calamity loan specific requirements
+            $errors = $calamityService->validateCalamityLoan($validated);
+            if (!empty($errors)) {
+                return back()->withErrors($errors)->withInput();
+            }
+
+            // Prepare calamity loan data with auto-calculated fields
+            $loanData = $calamityService->prepareCalamityLoanData($validated);
+            $loanData['user_id'] = $user->id;
+            $loanData['status'] = Loan::STATUS_PENDING;
+            $loanData['purpose'] = $validated['purpose'] ?? 'Calamity assistance';
+        } else {
+            $validated = $request->validate([
+                'loan_type' => ['required', 'in:' . implode(',', array_diff(Loan::TYPES, [Loan::TYPE_CALAMITY]))],
+                'amount' => ['required', 'numeric', 'min:1000', 'max:1000000'],
+                'term_months' => ['required', 'integer', 'min:1', 'max:60'],
+                'purpose' => ['nullable', 'string', 'max:1000'],
+            ]);
+
+            // Regular loans have fixed 10.5% p.a. interest rate
+            $loanData = [
+                'user_id' => $user->id,
+                'loan_type' => $validated['loan_type'],
+                'amount' => $validated['amount'],
+                'term_months' => $validated['term_months'],
+                'interest_rate' => config('loans.defaults.regular_loan_interest_rate', 10.5),
+                'purpose' => $validated['purpose'] ?? null,
+                'status' => Loan::STATUS_PENDING,
+            ];
+        }
+
+        $loan = Loan::create($loanData);
 
         // Log loan creation
         AuditService::logLoanAction(
             AuditService::ACTION_LOAN_CREATED,
             $loan->id,
-            ['amount' => $loan->amount, 'type' => $loan->loan_type]
+            [
+                'amount' => $loan->amount,
+                'type' => $loan->loan_type,
+                'is_calamity' => $isCalamityLoan,
+            ]
         );
 
+        $successMessage = $isCalamityLoan
+            ? 'Calamity loan application submitted successfully. Loanable amount: ₱' . number_format($loan->amount, 2)
+            : 'Loan application submitted successfully.';
+
         return redirect()->route('loans.show', $loan)
-            ->with('success', 'Loan application submitted successfully.');
+            ->with('success', $successMessage);
     }
 
     /**
      * Display the specified loan.
      * Members can only view their own loans.
      */
-    public function show(Loan $loan)
+    public function show(Loan $loan, CalamityLoanService $calamityService)
     {
         $user = Auth::user();
 
@@ -144,9 +182,16 @@ class LoanController extends Controller
 
         $loan->load(['user', 'reviewer', 'documents', 'payments']);
 
+        // Get calamity loan summary if applicable
+        $calamitySummary = null;
+        if ($loan->isCalamityLoan()) {
+            $calamitySummary = $calamityService->getCalamityLoanSummary($loan);
+        }
+
         return view('loans.show', [
             'loan' => $loan,
             'canReview' => $user->isAdminOrOfficer() && $loan->canBeReviewed(),
+            'calamitySummary' => $calamitySummary,
         ]);
     }
 
@@ -391,5 +436,61 @@ class LoanController extends Controller
 
         return redirect()->route('loans.show', $loan)
             ->with('success', 'Loan activated and disbursed.');
+    }
+
+    /**
+     * Disburse loan funds (Officer/Admin).
+     */
+    public function disburse(Request $request, Loan $loan)
+    {
+        $user = Auth::user();
+
+        if (!$user->isAdminOrOfficer()) {
+            abort(403, 'Only officers and admins can disburse loans.');
+        }
+
+        if (!$loan->isApproved()) {
+            return back()->with('error', 'Only approved loans can be disbursed.');
+        }
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'method' => ['required', 'in:cash,bank_transfer,check,online'],
+            'reference_number' => ['nullable', 'string', 'max:100'],
+            'disbursed_at' => ['required', 'date', 'before_or_equal:now'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $disbursement = \App\Models\Disbursement::create([
+            'loan_id' => $loan->id,
+            'amount' => $validated['amount'],
+            'method' => $validated['method'],
+            'reference_number' => $validated['reference_number'] ?? null,
+            'disbursed_by' => $user->id,
+            'disbursed_at' => $validated['disbursed_at'],
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        // Activate the loan upon disbursement if not already active
+        $approvedAmount = $loan->approved_amount ?? $loan->amount;
+        $loan->update([
+            'status' => Loan::STATUS_ACTIVE,
+            'disbursement_date' => $loan->disbursement_date ?? $validated['disbursed_at'],
+            'outstanding_balance' => $approvedAmount,
+            'total_paid' => $loan->total_paid ?? 0,
+        ]);
+
+        AuditService::logLoanAction(
+            AuditService::ACTION_LOAN_DISBURSED,
+            $loan->id,
+            [
+                'amount' => $disbursement->amount,
+                'method' => $disbursement->method,
+                'disbursed_by' => $user->id,
+            ]
+        );
+
+        return redirect()->route('loans.show', $loan)
+            ->with('success', 'Loan successfully disbursed and activated.');
     }
 }

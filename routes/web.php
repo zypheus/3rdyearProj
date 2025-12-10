@@ -12,6 +12,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Presentation route for project demonstration
+Route::get('/presentation', function () {
+    return view('presentation.index');
+})->name('presentation');
+
 Route::get('/dashboard', function () {
     // Redirect admin/officer to reports dashboard, members to regular dashboard
     if (auth()->user()->isAdminOrOfficer()) {
@@ -61,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approve');
     Route::patch('loans/{loan}/reject', [LoanController::class, 'reject'])->name('loans.reject');
     Route::patch('loans/{loan}/activate', [LoanController::class, 'activate'])->name('loans.activate');
+    // Disbursement (Officer/Admin)
+    Route::patch('loans/{loan}/disburse', [LoanController::class, 'disburse'])->name('loans.disburse');
 });
 
 /*
@@ -97,11 +104,19 @@ Route::middleware(['auth'])->group(function () {
 | - Officer/Admin: Record payments, update status
 */
 Route::middleware(['auth'])->group(function () {
+    // Pending payments queue (Officer/Admin only - enforced in controller)
+    Route::get('payments/queue', [PaymentController::class, 'queue'])->name('payments.queue');
+    
     // Payments for a specific loan
     Route::get('loans/{loan}/payments', [PaymentController::class, 'index'])->name('loans.payments.index');
     Route::get('loans/{loan}/payments/create', [PaymentController::class, 'create'])->name('loans.payments.create');
     Route::post('loans/{loan}/payments', [PaymentController::class, 'store'])->name('loans.payments.store');
+    // Member advance payment submission (production)
+    Route::post('loans/{loan}/payments/advance', [PaymentController::class, 'storeAdvance'])->name('loans.payments.advance.store');
     Route::get('loans/{loan}/schedule', [PaymentController::class, 'schedule'])->name('loans.schedule');
+    // Schedule propose/confirm (Officer/Admin)
+    Route::get('loans/{loan}/schedule/propose', [\App\Http\Controllers\PaymentScheduleController::class, 'propose'])->name('loans.schedule.propose');
+    Route::post('loans/{loan}/schedule/confirm', [\App\Http\Controllers\PaymentScheduleController::class, 'confirm'])->name('loans.schedule.confirm');
     
     // Individual payment actions
     Route::get('payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');

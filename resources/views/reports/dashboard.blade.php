@@ -150,6 +150,10 @@
                             <span class="text-sm text-slate-600 group-hover:text-slate-900">Documents Awaiting Verification</span>
                             <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $pendingDocuments > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600' }}">{{ $pendingDocuments }}</span>
                         </a>
+                        <a href="{{ route('payments.queue') }}" class="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                            <span class="text-sm text-slate-600 group-hover:text-slate-900">Payments Awaiting Verification</span>
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $pendingPayments > 0 ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600' }}">{{ $pendingPayments }}</span>
+                        </a>
                         <a href="{{ route('reports.delinquency') }}" class="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 transition-colors group">
                             <span class="text-sm text-slate-600 group-hover:text-slate-900">Overdue Payments</span>
                             <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $overduePayments > 0 ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800' }}">{{ $overduePayments }}</span>

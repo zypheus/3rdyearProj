@@ -58,6 +58,8 @@ class Payment extends Model
         'payment_date',
         'due_date',
         'payment_method',
+        'payment_schedule_id',
+        'is_advance',
         'reference_number',
         'status',
         'recorded_by',
@@ -87,6 +89,14 @@ class Payment extends Model
     public function loan(): BelongsTo
     {
         return $this->belongsTo(Loan::class);
+    }
+
+    /**
+     * Get the payment schedule associated with this payment.
+     */
+    public function schedule(): BelongsTo
+    {
+        return $this->belongsTo(PaymentSchedule::class, 'payment_schedule_id');
     }
 
     /**
@@ -132,5 +142,16 @@ class Payment extends Model
     public function isRejected(): bool
     {
         return $this->status === self::STATUS_REJECTED;
+    }
+
+    /**
+     * Determine if the authenticated member can simulate actions on this payment.
+     * Only allowed when simulation mode is enabled, payment is pending, and the
+     * payment belongs to the member.
+     */
+    public function memberCanSimulate(): bool
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($user && $user->isMember() && $user->id === $this->user_id && $this->isPending() && config('payments.simulation_mode'));
     }
 }

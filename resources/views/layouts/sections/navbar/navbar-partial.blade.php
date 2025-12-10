@@ -54,8 +54,8 @@ use Illuminate\Support\Facades\Route;
                                 </div>
                             </div>
                             <div class="flex-grow-1">
-                                <h6 class="mb-0">John Doe</h6>
-                                <small class="text-muted">Admin</small>
+                                <h6 class="mb-0">{{ Auth::user()->name ?? 'User' }}</h6>
+                                <small class="text-muted">{{ ucfirst(Auth::user()->role ?? 'Member') }}</small>
                             </div>
                         </div>
                     </a>
@@ -64,33 +64,58 @@ use Illuminate\Support\Facades\Route;
                     <div class="dropdown-divider my-1"></div>
                 </li>
                 <li>
-                    <a class="dropdown-item" href="javascript:void(0);">
+                    <a class="dropdown-item" href="{{ route('profile.edit') }}">
                         <i class="icon-base bx bx-user icon-md me-3"></i><span>My Profile</span>
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item" href="javascript:void(0);">
-                        <i class="icon-base bx bx-cog icon-md me-3"></i><span>Settings</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" href="javascript:void(0);">
-                        <span class="d-flex align-items-center align-middle">
-                            <i class="flex-shrink-0 icon-base bx bx-credit-card icon-md me-3"></i><span class="flex-grow-1 align-middle">Billing Plan</span>
-                            <span class="flex-shrink-0 badge rounded-pill bg-danger">4</span>
-                        </span>
+                    <a class="dropdown-item" href="{{ route('dashboard') }}">
+                        <i class="icon-base bx bx-home icon-md me-3"></i><span>Dashboard</span>
                     </a>
                 </li>
                 <li>
                     <div class="dropdown-divider my-1"></div>
                 </li>
                 <li>
-                    <a class="dropdown-item" href="javascript:void(0);">
-                        <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Log Out</span>
-                    </a>
+                    <form method="POST" action="{{ route('logout') }}" id="logout-form-navbar">
+                        @csrf
+                        <a class="dropdown-item" href="#" onclick="event.preventDefault(); confirmLogout();">
+                            <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Log Out</span>
+                        </a>
+                    </form>
                 </li>
             </ul>
         </li>
         <!--/ User -->
     </ul>
 </div>
+
+<script>
+function confirmLogout() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Log Out?',
+            text: 'Are you sure you want to log out?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, log out',
+            cancelButtonText: 'Cancel',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl px-6 py-2.5 font-semibold',
+                cancelButton: 'rounded-xl px-6 py-2.5 font-semibold'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('logout-form-navbar').submit();
+            }
+        });
+    } else {
+        if (confirm('Are you sure you want to log out?')) {
+            document.getElementById('logout-form-navbar').submit();
+        }
+    }
+}
+</script>

@@ -58,6 +58,13 @@ class ReportController extends Controller
         // Documents Pending Verification (using is_verified boolean)
         $pendingDocuments = Document::where('is_verified', false)->count();
 
+        // Payments Pending Verification
+        $pendingPayments = Payment::where('status', Payment::STATUS_PENDING)
+            ->whereHas('loan', function ($q) {
+                $q->where('status', 'active');
+            })
+            ->count();
+
         // User Statistics
         $userStats = [
             'total' => User::count(),
@@ -75,6 +82,7 @@ class ReportController extends Controller
             'recentPayments',
             'overduePayments',
             'pendingDocuments',
+            'pendingPayments',
             'userStats'
         ));
     }
